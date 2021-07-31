@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+        http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd
+        http://www.liquibase.org/xml/ns/pro
+http://www.liquibase.org/xml/ns/dbchangelog
+http://www.liquibase.org/xml/ns/dbchangelog-ext
+http://www.liquibase.org/xml/ns/pro ">
+
+    <changeSet id="creating department table" author="manager">
+        <createTable tableName="department">
+            <column name="department_id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="department_pk"/>
+            </column>
+            <column name="name" type="VARCHAR"/>
+            <column name="code" type="INT"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="creating class table" author="manager">
+        <createTable tableName="class">
+            <column name="class_id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="class_pk"/>
+            </column>
+            <column name="name" type="VARCHAR"/>
+            <column name="duration" type="INT"/>
+            <column name="department_id" type="INT">
+                <constraints nullable="false" foreignKeyName="fk_department_id" references="department(department_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="creating student table" author="manager">
+        <createTable tableName="student">
+            <column name="student_id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="student_pk"/>
+            </column>
+            <column name="first_name" type="VARCHAR"/>
+            <column name="last_name" type="VARCHAR"/>
+            <column name="gender" type="CHAR"/>
+            <column name="email" type="VARCHAR"/>
+            <column name="dob" type="DATE"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="creating index on student table" author="manager">
+        <createIndex tableName="student" indexName="index_first_name">
+            <column name="first_name"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Прерываюсь на объяснение и показ основного функционал Liquibase-->
+    
+    <changeSet id="creating lnk_class_to_student" author="manager">
+        <createTable tableName="lnk_class_to_student">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="lnk_pk"/>
+            </column>
+            <column name="class_id" type="INT">
+                <constraints nullable="false" foreignKeyName="fk_class_id" references="class(class_id)"/>
+            </column>
+            <column name="student_id" type="INT">
+                <constraints nullable="false" foreignKeyName="fk_student_id" references="student(student_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="filling the department table" author="manager">
+        <insert tableName="department">
+            <column name="name" value="Терапия"/>
+            <column name="code" value="100"/>
+        </insert>
+        <insert tableName="department">
+            <column name="name" value="Биология"/>
+            <column name="code" value="200"/>
+        </insert>
+        <!-- Сперва без rollback -->
+        <rollback>
+            <delete tableName="department">
+                <where>code in (100,200)</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="filling the class table" author="managfer">
+        <insert tableName="class">
+            <column name="name" value="Гастроэнтерология"/>
+            <column name="duration" value="170"/>
+            <column name="department_id" valueComputed="(SELECT department_id FROM department where code in ('100'))"/>
+        </insert>
+        <insert tableName="class">
+            <column name="name" value="Пульмонология"/>
+            <column name="duration" value="90"/>
+            <column name="department_id" valueComputed="(SELECT department_id FROM department where code=100)"/>
+        </insert>
+        <insert tableName="class">
+            <column name="name" value="Физиология"/>
+            <column name="duration" value="125"/>
+            <column name="department_id" valueComputed="(SELECT department_id FROM department where code=200)"/>
+        </insert>
+        <insert tableName="class">
+            <column name="name" value="Гистология"/>
+            <column name="duration" value="165"/>
+            <column name="department_id" valueComputed="(SELECT department_id FROM department where code=200)"/>
+        </insert>
+        <rollback>
+            <delete tableName="class">
+                <where>name in ('Гастроэнтерология','Пульмонология','Физиология','Гистология')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- Как правильно поменять индекс с first_name на last_name-->
+
+    <changeSet id="remove index" author="manager">
+        <dropIndex tableName="student" indexName="index_first_name"/>
+    </changeSet>
+
+    <changeSet id="creating index (last_name) on student table" author="manager">
+        <createIndex tableName="student" indexName="index_last_name">
+            <column name="last_name"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
